@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Character encoding -->
+  <meta charset="UTF-8">
+  <!-- Viewport for responsive design -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- SEO meta tags -->
+  <title>CaC Score Prediction</title>
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+  <meta name="author" content="MB Jallow">
+  <!-- Open Graph meta tags for social sharing -->
+  <meta property="og:title" content="CAC Score Prediction App">
+  <!-- Favicon -->
+  <link rel="apple-touch-icon" href="">
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+  <!-- JavaScript (deferred for performance) -->
+  <script src="d3.v7.js" defer></script>
+  <script src="framinghamRisk.js" defer></script>
+  <script src="framinghamChart.js" defer></script>
+  <script src="ascvdCalculator.js" defer></script>
+  <script src="calcFunctions.js" defer></script>
+  <script src="cacChart.js" defer></script>
+  <script src="ageChart.js" defer></script>
+  <script src="i18n.js" defer></script>
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <div class="disclaimer">
+      <span data-i18n="app.disclaimer">Not for clinical use.</span>
+    </div>
+    <h1><span data-i18n="app.title">CAC Score Prediction</span></h1>
+    <div class="language-selector">
+      <label for="language-select">Select Language:</label>
+      <select id="language-select">
+        <option value="de">Deutsch</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="details" data-i18n="tabs.details">Enter Details</button>
+      <button class="tab-btn" data-tab="predict-cac" disabled data-i18n="tabs.predict_cac">Predict CAC Score</button>
+      <button class="tab-btn" data-tab="predict-age" disabled data-i18n="tabs.predict_age">Predict Age</button>
+      <button class="tab-btn" data-tab="predict-ascvd" disabled data-i18n="tabs.predict_ascvd">Predict ASCVD</button>
+      <button class="tab-btn" data-tab="predict-framingham" disabled data-i18n="tabs.predict_framingham">Predict Framingham</button>
+      <button class="tab-btn" data-tab="summary" disabled data-i18n="tabs.summary">Summary</button>
+      <button class="tab-btn" data-tab="about" data-i18n="tabs.about">About</button>
+    </div>
+
+    <!-- Tab 1: Enter Details -->
+    <div class="tab-content active" id="details">
+      <form id="cacForm" class="form-container">
+        <div id="formBoxesContainer">
+          <!-- Box 1: Initial Measurement -->
+          <fieldset id="box1" class="input-box">
+            <legend data-i18n="form.initial_measurement">Initial Measurement</legend>
+            <div class="initial-section">
+              <!-- Gender -->
+              <fieldset>
+                <legend data-i18n="form.gender">Gender:</legend>
+                <label for="male">
+                  <input type="radio" id="male" name="gender" value="male" checked required aria-label="Gender Male">
+                  <span data-i18n="form.male">Male</span>
+                </label>
+                <label for="female">
+                  <input type="radio" id="female" name="gender" value="female" required aria-label="Gender Female">
+                  <span data-i18n="form.female">Female</span>
+                </label>
+              </fieldset>
+              <!-- Patient Name -->
+              <div class="input-group">
+                <label for="patient_name" data-i18n="form.patient_id">Patient ID:</label>
+                <input type="text" id="patient_name" name="patient_name" value="ID" aria-label="Patient ID">
+              </div>
+              <!-- Age t0 -->
+              <div class="input-group">
+                <label for="age_t0">
+                  <span  data-i18n-html="form.initial_age">Initial age t0 [Years]:</span>
+                  <span class="help-icon" data-i18n-tooltip="tooltip.age_t0">?</span>
+
+                </label>
+                <input type="number" id="age_t0" name="age_t0" min="45" max="80" required aria-label="Initial Age" pattern="[0-9]+">
+                <span data-i18n="instruction.initial_age" id="age_t0_instruction">Enter a number: 45-80</span>
+              </div>
+              <!-- CAC t0 -->
+              <div class="input-group">
+                <label for="cac_t0"> 
+                <span data-i18n-html="form.initial_cac">Initial CAC t0 [Agatston units]: </span>
+                <span class="help-icon" data-i18n-tooltip="tooltip.initial_cac">?</span> 
+                </label>
+                <input type="number" id="cac_t0" name="cac_t0" min="0" max="1000" required aria-label="Initial CAC Score" pattern="[0-9]+">
+                <span data-i18n="instruction.initial_cac" id="cac_t0_instruction">Enter a number: 0-1000</span>
+              </div>
+              <!-- Age t1 Future Prediction -->
+              <div class="input-group">
+                <label for="age_t1_future"> 
+                  <span data-i18n="form.age_t1">Age t1 [Years] Prediction:</span> 
+                  <span class="help-icon" data-i18n-tooltip="tooltip.age_t1">?</span> 
+              </label>
+                <input type="number" id="age_t1_future" name="age_t1_future" aria-label="Future Age t1" pattern="[0-9]+">
+                <span data-i18n-html="instruction.age_t1" id="age_t1_range">Enter a number: Min - Max</span>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Box 2: Second Measurement -->
+          <fieldset id="box2" class="input-box">
+            <legend data-i18n="form.second_measurement">Second Measurement</legend>
+            <!-- Checkbox for second measurement -->
+            <div class="input-group">
+              <label for="second_measurement" data-i18n-html="form.second_measurement_available">There is a second measurement</label>
+              <input type="checkbox" id="second_measurement" name="second_measurement" aria-label="Second Measurement Available">
+            </div>
+            <div id="second_measurement_section" class="optional-section">
+              <!-- Age t2 -->
+              <div class="input-group">
+                <label for="age_t2" > 
+                <span data-i18n-html="form.age_t2">
+                  Age t2 [Years]: 
+                </span>
+                  <span class="help-icon" data-i18n-tooltip="tooltip.age_t2">?</span>
+                </label>
+                <input type="number" id="age_t2" name="age_t2" min="50" max="80" aria-label="Age at Second Measurement" pattern="[0-9]+">
+                <span data-i18n-html="instruction.age_t2" id="age_t2_range">Enter a number: Min - Max</span>
+              </div>
+              <!-- CAC t2 -->
+              <div class="input-group">
+                <label for="cac_t2" >
+                <span data-i18n-html="form.cac_t2">CAC t2 [Agatston units]: </span>
+                <span class="help-icon" data-i18n-tooltip="tooltip.cac_t2">?</span>
+                </label>
+                <input type="number" id="cac_t2" name="cac_t2" min="0" max="1000" aria-label="CAC Score at Second Measurement" pattern="[0-9]+">
+                <span data-i18n="instruction.cac_t2" id="cac_t2_instruction">Enter a number: 0-1000</span>
+              </div>
+              <!-- Age t2 Future Prediction -->
+              <div class="input-group">
+                <label for="age_t2_future" >
+                <span data-i18n-html="form.age_t2_future"> Age t2 [Years] Prediction: </span>
+                <span class="help-icon" data-i18n-tooltip="tooltip.age_t2_future">?</span>
+                </label>
+                <input type="number" id="age_t2_future" name="age_t2_future" aria-label="Future Age t2" pattern="[0-9]+">
+                <span data-i18n-html="instruction.age_t2_prediction" id="age_t2_future_range">Enter a number: Min - Max</span>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Risk Calculators Checkbox -->
+          <div class="input-group" id="risk-box">
+            <label for="show_risk_calculators">
+              <input type="checkbox" id="show_risk_calculators" name="show_risk_calculators" aria-label="Show Other Risk Calculators">
+              <span data-i18n="form.use_risk_calculators">Use other risk calculators:</span>
+            </label>
+          </div>
+
+          <!-- Box 3: Framingham/ASCVD Risk Calculation -->
+          <fieldset id="box3" class="input-box risk-box">
+            <legend data-i18n="form.risk_calculation">Framingham/ASCVD Risk Calculation</legend>
+            <div class="optional-section">
+              <div class="input-group">
+                <label for="use_framingham" data-i18n="form.use_framingham">Use Framingham 10-Year Risk?</label>
+                <input type="checkbox" id="use_framingham" name="use_framingham" aria-label="Use Framingham 10-Year Risk">
+              </div>
+              <div class="input-group">
+                <label for="use_ascvd" data-i18n="form.use_ascvd">Use ASCVD 10-Year Risk with CAC?</label>
+                <input type="checkbox" id="use_ascvd" name="use_ascvd" aria-label="Use ASCVD 10-Year Risk">
+              </div>
+              <div class="input-group">
+                <label for="race" data-i18n="form.race_ethnicity">Race/Ethnicity:</label>
+                <select id="race" name="race" aria-label="Race/Ethnicity">
+                  <option value="white" data-i18n="form.race.white">Caucasian</option>
+                  <option value="aa" data-i18n="form.race.aa">African American</option>
+                  <option value="chinese" data-i18n="form.race.chinese">Chinese American</option>
+                  <option value="hispanic" data-i18n="form.race.hispanic">Hispanic</option>
+                </select>
+              </div>
+              <div class="input-group">
+                <label for="total_chol" data-i18n="form.total_cholesterol_label">Total Cholesterol:</label>
+                <input type="number" id="total_chol" name="total_chol" value="" aria-label="Total Cholesterol" pattern="[0-9.]+">
+                <select id="total_chol_unit" name="total_chol_unit" aria-label="Total Cholesterol Unit">
+                  <option value="mgdl" data-i18n="form.unit.mgdl">mg/dL</option>
+                  <option value="mmolL" data-i18n="form.unit.mmolL">mmol/L</option>
+                </select>
+                <!-- ADD THIS SPAN FOR INSTRUCTIONS -->
+                <span data-i18n-html="instruction.total_chol" id="total_chol_instruction" class="instruction-text"></span>
+              </div>
+              <div class="input-group">
+                <label for="hdl_chol" data-i18n="form.hdl_cholesterol_label">HDL Cholesterol:</label>
+                <input type="number" id="hdl_chol" name="hdl_chol" value="" aria-label="HDL Cholesterol" pattern="[0-9.]+">
+                <select id="hdl_chol_unit" name="hdl_chol_unit" aria-label="HDL Cholesterol Unit">
+                  <option value="mgdl" data-i18n="form.unit.mgdl">mg/dL</option>
+                  <option value="mmolL" data-i18n="form.unit.mmolL">mmol/L</option>
+                </select>
+                <!-- ADD THIS SPAN FOR INSTRUCTIONS -->
+                <span data-i18n-html="instruction.hdl_chol" id="hdl_chol_instruction" class="instruction-text"></span>
+              </div>
+              <div class="input-group">
+                <label for="systolic_bp" data-i18n="form.systolic_bp">Systolic BP (90-200):</label>
+                <input type="number" id="systolic_bp" name="systolic_bp" min="90" max="200" aria-label="Systolic Blood Pressure" pattern="[0-9]+">
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Box 4: Medication History & Other Risk Factors -->
+          <fieldset id="box4" class="input-box risk-box">
+            <legend data-i18n="form.medication_history">Medication History & Other Risk Factors</legend>
+            <div class="optional-section">
+              <fieldset class="input-group">
+                <legend data-i18n="form.bp_meds">On BP meds?</legend>
+                <label for="bp_meds_yes">
+                  <input type="radio" id="bp_meds_yes" name="bp_meds" value="1" aria-label="On BP Medication Yes">
+                  <span data-i18n="form.yes">Yes</span>
+                </label>
+                <label for="bp_meds_no">
+                  <input type="radio" id="bp_meds_no" name="bp_meds" value="0" checked aria-label="On BP Medication No">
+                  <span data-i18n="form.no">No</span>
+                </label>
+              </fieldset>
+              <fieldset class="input-group">
+                <legend data-i18n="form.lipid_meds">On Lipid Medications?</legend>
+                <label for="lipid_meds_yes">
+                  <input type="radio" id="lipid_meds_yes" name="lipid_meds" value="1" aria-label="On Lipid Medications Yes">
+                  <span data-i18n="form.yes">Yes</span>
+                </label>
+                <label for="lipid_meds_no">
+                  <input type="radio" id="lipid_meds_no" name="lipid_meds" value="0" checked aria-label="On Lipid Medications No">
+                  <span data-i18n="form.no">No</span>
+                </label>
+              </fieldset>
+              <fieldset class="input-group">
+                <legend data-i18n="form.diabetes">Diabetes:</legend>
+                <label for="diabetes_yes">
+                  <input type="radio" id="diabetes_yes" name="diabetes" value="1" aria-label="Diabetes Yes">
+                  <span data-i18n="form.yes">Yes</span>
+                </label>
+                <label for="diabetes_no">
+                  <input type="radio" id="diabetes_no" name="diabetes" value="0" checked aria-label="Diabetes No">
+                  <span data-i18n="form.no">No</span>
+                </label>
+              </fieldset>
+              <fieldset class="input-group">
+                <legend data-i18n="form.smoker">Smoker?</legend>
+                <label for="smoker_yes">
+                  <input type="radio" id="smoker_yes" name="smoker" value="1" aria-label="Smoker Yes">
+                  <span data-i18n="form.yes">Yes</span>
+                </label>
+                <label for="smoker_no">
+                  <input type="radio" id="smoker_no" name="smoker" value="0" checked aria-label="Smoker No">
+                  <span data-i18n="form.no">No</span>
+                </label>
+              </fieldset>
+              <fieldset class="input-group">
+                <legend data-i18n="form.family_heartattack">Family History of Heart Attack:</legend>
+                <label for="fh_heartattack_yes">
+                  <input type="radio" id="fh_heartattack_yes" name="fh_heartattack" value="1" aria-label="Family History of Heart Attack Yes">
+                  <span data-i18n="form.yes">Yes</span>
+                </label>
+                <label for="fh_heartattack_no">
+                  <input type="radio" id="fh_heartattack_no" name="fh_heartattack" value="0" checked aria-label="Family History of Heart Attack No">
+                  <span data-i18n="form.no">No</span>
+                </label>
+              </fieldset>
+            </div>
+          </fieldset>
+          <!-- Calculate and Reset Buttons -->
+          <div class="button-group">
+            <input type="button" value="Calculate" id="calculateButton" data-i18n="form.calculate_button">
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Tab 2: Predict CAC Score -->
+    <div class="tab-content" id="predict-cac">
+      <div class="result-card">
+        <div class="result-value"></div>
+        <div id="cac-chart"></div>
+        <div class="interactive-inputs">
+          <label for="interactive_age_t1" data-i18n="interactive.age_t0">
+            Age t0 [Years]:
+            <span class="help-icon" data-tooltip="Enter the patient's age at the time of the initial CAC measurement (between 45 and 80 years).">?</span>
+          </label>
+          <input type="number" id="interactive_age_t1" min="45" max="80" value="">
+          <label for="interactive_cac_t0" data-i18n="interactive.initial_cac">
+            Initial CAC Score:
+            <span class="help-icon" data-tooltip="Enter the patient's initial CAC score in Agatston units (non-negative value).">?</span>
+          </label>
+          <input type="number" id="interactive_cac_t0" min="0" max="1000" value="">
+          <label for="interactive_gender" data-i18n="interactive.gender">Gender:</label>
+          <select id="interactive_gender">
+            <option value="male" data-i18n="form.male">Male</option>
+            <option value="female" data-i18n="form.female">Female</option>
+          </select>
+          <label>
+            <input type="checkbox" id="interactive_second_measurement">
+            <span data-i18n="interactive.second_measurement">Second Measurement</span>
+          </label>
+          <div id="interactive_second_measurement_section" style="display: none;">
+            <label for="interactive_age_t2" data-i18n="interactive.age_t2">Age t2 [Years]:</label>
+            <input type="number" id="interactive_age_t2" min="45" max="80">
+            <label for="interactive_cac_t2" data-i18n="interactive.second_cac">Second CAC Score:</label>
+            <input type="number" id="interactive_cac_t2" min="0" max="1000">
+          </div>
+        </div>
+        <br><br>
+        <div class="export-buttons">
+          <button id="export-cac-png" data-i18n="export.cac_png">Export CAC Score Chart as PNG</button>
+          <button id="export-cac-svg" data-i18n="export.cac_svg">Export CAC Score Chart as SVG</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Predict Age -->
+    <div class="tab-content" id="predict-age">
+      <div class="result-card">
+        <div class="result-value"></div>
+        <div id="age-chart"></div>
+        <div class="export-buttons">
+          <button id="export-age-png" data-i18n="export.age_png">Export Age Prediction Chart as PNG</button>
+          <button id="export-age-svg" data-i18n="export.age_svg">Export Age Prediction Chart as SVG</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Predict ASCVD -->
+    <div class="tab-content" id="predict-ascvd">
+      <div class="result-card">
+        <h2 data-i18n="ascvd_risk.title">ASCVD 10-Year Risk Prediction</h2>
+        <table class="result-table">
+          <tr class="section-header">
+            <th data-i18n="ascvd_risk.risk_of_chd_event">10-Year Risk of CHD Event (%)</th>
+            <th data-i18n="ascvd_risk.coronary_age">Coronary Age</th>
+            <th data-i18n="ascvd_risk.difference_from_chronologic_age">Difference from Chronologic Age</th>
+          </tr>
+          <tr>
+            <td id="ascvd-risk" class="result-value">--</td>
+            <td id="ascvd-coronary-age" class="result-value">--</td>
+            <td id="ascvd-age-diff" class="result-value">--</td>
+          </tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- Tab 5: Predict Framingham -->
+    <div class="tab-content" id="predict-framingham">
+      <div class="result-card">
+        <h2 data-i18n="framingham_chart.title">Framingham 10-Year Risk Prediction</h2>
+        <table class="result-table">
+          <tr class="section-header">
+            <th data-i18n="framingham_chart.axis_risk">10-Year CHD Risk (%)</th>
+            <th data-i18n="framingham_chart.risk_interpretation">Risk Interpretation</th>
+          </tr>
+          <tr>
+            <td id="framingham-risk" class="result-value">--</td>
+            <td id="framingham-interpretation" class="result-value">--</td>
+          </tr>
+        </table>
+        <div id="framingham-chart-container">
+          <!-- Chart will be rendered here -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 6: Summary -->
+    <div class="tab-content" id="summary">
+      <div id="summary-content">
+        <!-- Dynamically generated summary content -->
+      </div>
+    </div>
+
+    <!-- Tab 7: About -->
+    <div class="tab-content" id="about">
+      <h2 class="center-text" data-i18n="about.about_title">About CAC Score Calculator</h2>
+      <h3 class="center-text" data-i18n="about.study_title">
+        Value of Progression of Coronary Artery Calcification for Risk Prediction of Coronary and Cardiovascular
+        Events - Result of the Heinz Nixdorf Recall (HNR) study
+      </h3>
+      <p class="center-text" data-i18n-html="about.authors">
+        Nils Lehmann, Raimund Erbel, Amir A. Mahabadi, Michael Rauwolf, Stefan Möhlenkamp,
+        Susanne Moebus, Hagen Kälsch, Thomas Budde, Axel Schmermund, Andreas Stang, Dagmar
+        Führer, Christian Weimar, Ulla Roggenbuck, Nico Dragano, and Karl-Heinz Jöckel <br>
+        <i>on behalf of the Heinz Nixdorf Recall Study Investigators</i><br>
+        <span data-i18n="about.citation">CIRCULATION AHA/2016/027034</span>
+      </p>
+      <br>
+        <p class="center-text" data-i18n-html="about.developer_info"></p>
+      <br>
+      <p data-i18n="about.description1">
+        This CAC calculator application may help clinicians interpret their patients' CAC scores
+        and determine those that will in the future reach CAC thresholds associated with
+        unfavourable risk, such as a CAC score of 400.
+      </p>
+      <p data-i18n="about.description2">
+        It therefore may help patient communication, when the physician and the patient can
+        evaluate together the patient's individual course of CAC-progression, which may
+        improve patient adherence to risk factor modifications via lifestyle changes.
+      </p>
+      <p data-i18n="about.description3">
+        It may also be used to plan the time schedule for a second CAC measurement,
+        which can disclose whether patient adherence to risk factor modification and medication
+        have slowed down CAC progression, or whether progression of coronary artery
+        calcification is faster than expected from the natural course.
+      </p>
+      <p data-i18n="about.description4">
+        It must be noted that the tool so far is based on data from a Caucasian, urban
+        population in Germany. Other populations may follow different percentiles and
+        therefore the application should be used with adequate caution.
+      </p>
+      <p data-i18n="about.description5">
+        The present prediction tool is based on an underlying exponential relation
+        between CAC and age. Accuracy of predictions decreases with increasing time between
+        measurement and prediction, and absolute deviations between predicted and measured
+        CAC tend to increase with predicted CAC.
+      </p>
+      <p data-i18n="about.disclaimer">
+        Predictions made using this application cannot replace clinical judgment based on
+        patient examination and clinical guidelines.
+      </p>
+      <p class="center-text" data-i18n-html="about.freeware">
+        This application is freeware. <br>© 2017 Rauwolf 1, Lehmann 2, Mahabadi 3, Erbel 2 <br>
+        1 Central IT, 2 Institute for Medical Informatics, Biometry and Epidemiology <br>
+        3 West-German Heart Center Essen <br>
+        University Duisburg-Essen, Germany
+      </p>
+    </div>
+  </div>
+
+  <!-- Modal Structure -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="close">×</span>
+      <p id="modalMessage">Your message here</p>
+    </div>
+  </div>
+
+  
+</body>
+</html>
