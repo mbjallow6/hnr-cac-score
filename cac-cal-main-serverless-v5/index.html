@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <!-- Character encoding -->
+  <meta charset="UTF-8">
+  <!-- Viewport for responsive design -->
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- SEO meta tags -->
+  <title>CaC Score Prediction</title>
+  <meta name="description" content="">
+  <meta name="keywords" content="">
+  <meta name="author" content="MB Jallow">
+  <!-- Open Graph meta tags for social sharing -->
+  <meta property="og:title" content="CAC Score Prediction App">
+  <!-- Favicon -->
+  <link rel="apple-touch-icon" href="">
+  <!-- CSS -->
+  <link rel="stylesheet" href="style.css">
+  <!-- external scripts -->
+   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <!-- JavaScript (deferred for performance) -->
+  <script src="d3.v7.js" defer></script>
+  <script src="calcFunctions.js" defer></script>
+  <script src="cacChart.js" defer></script>
+  <script src="ageChart.js" defer></script>
+  <script src="i18n.js" defer></script>
+  <script src="pdfExport.js" defer></script> 
+  <script src="script.js" defer></script>
+</head>
+<body>
+  <div class="container">
+    <header class="app-header">
+  <!-- Row 1: Disclaimer -->
+  <div class="disclaimer">
+    <span data-i18n="app.disclaimer">Not for clinical use.</span>
+  </div>
+
+  <!-- Row 2: Title and Language Selector -->
+  <div class="header-bottom-row">
+    <h1><span data-i18n="app.title">CAC Score Prediction</span></h1>
+    <div class="language-selector">
+      <label for="language-select">
+        <span data-i18n="language-selector.language-select">Select Language:</span>
+      </label>
+      <select id="language-select">
+        <option value="de">Deutsch</option>
+        <option value="en">English</option>
+      </select>
+    </div>
+  </div>
+</header>
+
+
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="about" data-i18n="tabs.about">About</button>
+      <button class="tab-btn" data-tab="details" data-i18n="tabs.details">Enter Details</button>
+      <button class="tab-btn" data-tab="predict-cac" disabled data-i18n="tabs.predict_cac">Predict CAC Score</button>
+      <button class="tab-btn" data-tab="predict-age" disabled data-i18n="tabs.predict_age">Predict Age</button>
+      <button class="tab-btn" data-tab="summary" disabled data-i18n="tabs.summary">Summary</button>
+      
+    </div>
+
+
+    <!-- Tab 7: About -->
+    <div class="tab-content active" id="about">
+      <h2 class="center-text" data-i18n="about.about_title">About CAC Score Calculator</h2>
+      <h3 class="center-text" data-i18n="about.study_title">
+        Value of Progression of Coronary Artery Calcification for Risk Prediction of Coronary and Cardiovascular
+        Events - Result of the Heinz Nixdorf Recall (HNR) study
+      </h3>
+      <p class="center-text" data-i18n-html="about.authors">
+        Nils Lehmann, Raimund Erbel, Amir A. Mahabadi, Michael Rauwolf, Stefan Möhlenkamp,
+        Susanne Moebus, Hagen Kälsch, Thomas Budde, Axel Schmermund, Andreas Stang, Dagmar
+        Führer, Christian Weimar, Ulla Roggenbuck, Nico Dragano, and Karl-Heinz Jöckel <br>
+        <i>on behalf of the Heinz Nixdorf Recall Study Investigators</i><br>
+        <span data-i18n="about.citation">CIRCULATION AHA/2016/027034</span>
+      </p>
+      <br>
+        <p class="center-text" data-i18n-html="about.developer_info"></p>
+          <div style="text-align: center; margin: 20px 0;">
+            <!-- <button type="button" id="goToDetailsBtn" class="calculate-button">Go to Calculator</button> -->
+            <button type="button" id="goToDetailsBtn" class="calculate-button" data-i18n="about.go_to_calculator_btn">Go to Calculator</button>
+          </div>
+      <br>
+      <p data-i18n="about.description1">
+        This CAC calculator application may help clinicians interpret their patients' CAC scores
+        and determine those that will in the future reach CAC thresholds associated with
+        unfavourable risk, such as a CAC score of 400.
+      </p>
+      <p data-i18n="about.description2">
+        It therefore may help patient communication, when the physician and the patient can
+        evaluate together the patient's individual course of CAC-progression, which may
+        improve patient adherence to risk factor modifications via lifestyle changes.
+      </p>
+      <p data-i18n="about.description3">
+        It may also be used to plan the time schedule for a second CAC measurement,
+        which can disclose whether patient adherence to risk factor modification and medication
+        have slowed down CAC progression, or whether progression of coronary artery
+        calcification is faster than expected from the natural course.
+      </p>
+      <p data-i18n="about.description4">
+        It must be noted that the tool so far is based on data from a Caucasian, urban
+        population in Germany. Other populations may follow different percentiles and
+        therefore the application should be used with adequate caution.
+      </p>
+      <p data-i18n="about.description5">
+        The present prediction tool is based on an underlying exponential relation
+        between CAC and age. Accuracy of predictions decreases with increasing time between
+        measurement and prediction, and absolute deviations between predicted and measured
+        CAC tend to increase with predicted CAC.
+      </p>
+      <p data-i18n="about.disclaimer">
+        Predictions made using this application cannot replace clinical judgment based on
+        patient examination and clinical guidelines.
+      </p>
+      <p class="center-text" data-i18n-html="about.freeware">
+        This application is freeware. <br>© 2017 Rauwolf 1, Lehmann 2, Mahabadi 3, Erbel 2 <br>
+        1 Central IT, 2 Institute for Medical Informatics, Biometry and Epidemiology <br>
+        3 West-German Heart Center Essen <br>
+        University Duisburg-Essen, Germany
+      </p>
+    </div>
+    <!-- Tab 1: Enter Details -->
+    <div class="tab-content" id="details">
+      <form id="cacForm" class="form-container">
+        <div id="formBoxesContainer">
+          <!-- Box 1: Initial Measurement -->
+          <fieldset id="box1" class="input-box">
+            <legend data-i18n="form.initial_measurement">Initial Measurement</legend>
+            <div class="initial-section">
+              <!-- Gender -->
+              <fieldset>
+                <legend data-i18n="form.gender">Gender:</legend>
+                <label for="male">
+                  <input type="radio" id="male" name="gender" value="male" checked required aria-label="Gender Male">
+                  <span data-i18n="form.male">Male</span>
+                </label>
+                <label for="female">
+                  <input type="radio" id="female" name="gender" value="female" required aria-label="Gender Female">
+                  <span data-i18n="form.female">Female</span>
+                </label>
+              </fieldset>
+              <!-- Patient Name -->
+              <div class="input-group">
+                <label for="patient_name" data-i18n="form.patient_id">Patient ID:</label>
+                <input type="text" id="patient_name" name="patient_name" value="NN" aria-label="Patient ID">
+              </div>
+              <!-- Age t0 -->
+              <div class="input-group">
+                <label for="age_t0">
+                  <span  data-i18n-html="form.initial_age">Initial age t0 [Years]:</span>
+                  <span class="help-icon" data-i18n-tooltip="tooltip.age_t0">?</span>
+
+                </label>
+                <input type="number" id="age_t0" name="age_t0" min="45" max="80" required aria-label="Initial Age" pattern="[0-9]+">
+                <span data-i18n="instruction.initial_age" id="age_t0_instruction">Enter a number: 45-80</span>
+              </div>
+              <!-- CAC t0 -->
+              <div class="input-group">
+                <label for="cac_t0"> 
+                <span data-i18n-html="form.initial_cac">Initial CAC t0 [Agatston units]: </span>
+                <span class="help-icon" data-i18n-tooltip="tooltip.initial_cac">?</span> 
+                </label>
+                <input type="number" id="cac_t0" name="cac_t0" min="0" max="1000" required aria-label="Initial CAC Score" pattern="[0-9]+">
+                <span data-i18n="instruction.initial_cac" id="cac_t0_instruction">Enter a number: 0-1000</span>
+              </div>
+              <!-- Age t1 Future Prediction -->
+              <div class="input-group">
+                <label for="age_t1_future"> 
+                  <span data-i18n="form.age_t1">Age t1 [Years] Prediction:</span> 
+                  <span class="help-icon" data-i18n-tooltip="tooltip.age_t1">?</span> 
+              </label>
+                <input type="number" id="age_t1_future" name="age_t1_future" aria-label="Future Age t1" pattern="[0-9]+">
+                <span data-i18n-html="instruction.age_t1" id="age_t1_range">Enter a number: Min - Max</span>
+              </div>
+            </div>
+          </fieldset>
+
+          <!-- Box 2: Second Measurement -->
+          <fieldset id="box2" class="input-box">
+            <legend data-i18n="form.second_measurement">Second Measurement</legend>
+            <!-- Checkbox for second measurement -->
+            <div class="input-group">
+              <label for="second_measurement" data-i18n-html="form.second_measurement_available">There is a second measurement</label>
+              <input type="checkbox" id="second_measurement" name="second_measurement" aria-label="Second Measurement Available">
+            </div>
+            <div id="second_measurement_section" class="optional-section">
+              <!-- Age t2 -->
+              <div class="input-group">
+                <label for="age_t2" > 
+                <span data-i18n-html="form.age_t2">
+                  Age t2 [Years]: 
+                </span>
+                  <span class="help-icon" data-i18n-tooltip="tooltip.age_t2">?</span>
+                </label>
+                <input type="number" id="age_t2" name="age_t2" min="50" max="80" aria-label="Age at Second Measurement" pattern="[0-9]+">
+                <span data-i18n-html="instruction.age_t2" id="age_t2_range">Enter a number: Min - Max</span>
+              </div>
+              <!-- CAC t2 -->
+              <div class="input-group">
+                <label for="cac_t2" >
+                <span data-i18n-html="form.cac_t2">CAC t2 [Agatston units]: </span>
+                <span class="help-icon" data-i18n-tooltip="tooltip.cac_t2">?</span>
+                </label>
+                <input type="number" id="cac_t2" name="cac_t2" min="0" max="1000" aria-label="CAC Score at Second Measurement" pattern="[0-9]+">
+                <span data-i18n="instruction.cac_t2" id="cac_t2_instruction">Enter a number: 0-1000</span>
+              </div>
+              <!-- Age t2 Future Prediction -->
+              <div class="input-group">
+                <label for="age_t2_future" >
+                <span data-i18n-html="form.age_t2_future"> Age t2 [Years] Prediction: </span>
+                <span class="help-icon" data-i18n-tooltip="tooltip.age_t2_future">?</span>
+                </label>
+                <input type="number" id="age_t2_future" name="age_t2_future" aria-label="Future Age t2" pattern="[0-9]+">
+                <span data-i18n-html="instruction.age_t2_prediction" id="age_t2_future_range">Enter a number: Min - Max</span>
+              </div>
+            </div>
+          </fieldset>
+          
+          <!-- Calculate and Reset Buttons -->
+          <div class="button-group">
+            <button type="button" id="calculateButton" class="calculate-button" data-i18n="form.calculate_button">Calculate</button>
+            <!-- <input type="button" value="Calculate" id="calculateButton" class="calculate-button" data-i18n="form.calculate_button"> -->
+          </div>
+        </div>
+      </form>
+    </div>
+
+    <!-- Tab 2: Predict CAC Score -->
+    <div class="tab-content" id="predict-cac">
+      <div class="result-card">
+        <div class="result-value"></div>
+        <div id="cac-chart"></div>
+        
+        <!-- <br><br> -->
+        <div class="export-buttons">
+          <button id="export-cac-png" data-i18n="export.cac_png">Export CAC Score Chart as PNG</button>
+          <!-- <button id="export-cac-svg" data-i18n="export.cac_svg">Export CAC Score Chart as SVG</button> -->
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: Predict Age -->
+    <div class="tab-content" id="predict-age">
+      <div class="result-card">
+        <div class="result-value"></div>
+        <div id="age-chart"></div>
+        <div class="export-buttons">
+          <button id="export-age-png" data-i18n="export.age_png">Export Age Prediction Chart as PNG</button>
+          <!-- <button id="export-age-svg" data-i18n="export.age_svg">Export Age Prediction Chart as SVG</button> -->
+        </div>
+      </div>
+    </div>
+
+    
+
+    <!-- Tab 6: Summary -->
+    <div class="tab-content" id="summary">
+      <div id="summary-content">
+        <!-- Dynamically generated summary content -->
+      </div>
+    </div>
+
+    
+  </div>
+
+  <!-- Modal Structure -->
+  <div id="myModal" class="modal">
+    <div class="modal-content">
+      <span id="closeModal" class="close">×</span>
+      <p id="modalMessage">Your message here</p>
+    </div>
+  </div>
+
+  
+</body>
+</html>
